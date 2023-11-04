@@ -1,5 +1,8 @@
+import { renderToStaticMarkup } from 'react-dom/server'
 import './App.css'
+import { Layer } from './Layer'
 import OSMData from './assets/map.osm?raw'
+import { osmFeatureKeys } from './features'
 
 const mercator = (lat: number, lon: number) => {
   const x = lon
@@ -23,7 +26,6 @@ function App() {
   const [seX, seY] = mercator(minlat, maxlon)
   const scale = 1000 / (nwX - seX)
   const aspect = (seX - nwX) / (nwY - seY)
-  console.log(scale, aspect)
 
   const toGraphicXY = (lat: number, lon: number) => {
     const [x, y] = mercator(lat, lon)
@@ -32,50 +34,100 @@ function App() {
     return [graphicX, graphicY]
   }
 
-  const ways = doc.querySelectorAll('way')
+  const renderLayer = (layer: Layer) => {
+    const content = layer.els.map((el) => {
+      if (el instanceof Layer) {
+        return renderLayer(el)
+      } else {
+        const nds = el.getElementsByTagName('nd')
+
+        const points = Array.from(nds).map((nd) => {
+          const ref = nd.getAttribute('ref')
+          if (!ref) return null
+
+          const node = doc.getElementById(ref)
+          return toGraphicXY(
+            +(node?.getAttribute('lat') || 0),
+            +(node?.getAttribute('lon') || 0),
+          ).join(',')
+        })
+        return (
+          <g id={el.id} key={el.id}>
+            <polyline
+              points={points.join(',')}
+              style={{
+                fill: 'none',
+                stroke: '#000',
+                strokeWidth: '1px',
+              }}
+            />
+          </g>
+        )
+      }
+    })
+
+    if (layer.id === 'root') {
+      // return <switch>{content}</switch>
+      return <g>{content}</g>
+    } else {
+      return (
+        <g id={layer.id} key={layer.id}>
+          {content}
+        </g>
+      )
+    }
+  }
+
+  const render = () => (
+    <svg
+      version="1.1"
+      xmlns="http://www.w3.org/2000/svg"
+      width="800"
+      height={800 / aspect}
+      viewBox={[0, 0, 1000, 1000 / aspect].join(',')}
+      style={{ border: '1px solid #000' }}
+    >
+      {renderLayer(layer)}
+    </svg>
+  )
+
+  const ways = Array.from(doc.querySelectorAll('way'))
+  const layer = new Layer('root')
+  for (const way of ways) {
+    const tags = Array.from(way.getElementsByTagName('tag'))
+    searchKey: for (const tag of tags) {
+      const k = tag.getAttribute('k')
+      for (const key of osmFeatureKeys) {
+        if (k === key) {
+          const v = tag.getAttribute('v')
+          if (v) {
+            layer.add([k, v], way)
+          }
+          break searchKey
+        }
+      }
+    }
+  }
+
   return (
     <>
       {errorNode ? (
         <div>Parse error</div>
       ) : (
-        <div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="800"
-            height={800 / aspect}
-            viewBox={[0, 0, 1000, 1000 / aspect].join(',')}
-            style={{ border: '1px solid #000' }}
+        <>
+          <div>{render()}</div>
+          <a
+            target="_blank"
+            download={Date.now() + '.svg'}
+            href={URL.createObjectURL(
+              new Blob([renderToStaticMarkup(render())], {
+                type: 'image/svg+xml',
+              }),
+            )}
           >
-            <g>
-              {Array.from(ways).map((way) => {
-                const nds = way.getElementsByTagName('nd')
-
-                const points = Array.from(nds).map((nd) => {
-                  const ref = nd.getAttribute('ref')
-                  if (!ref) return null
-
-                  const node = doc.getElementById(ref)
-                  return toGraphicXY(
-                    +(node?.getAttribute('lat') || 0),
-                    +(node?.getAttribute('lon') || 0),
-                  ).join(',')
-                })
-                return (
-                  <g id={way.id} key={way.id}>
-                    <polyline
-                      points={points.join(',')}
-                      style={{
-                        fill: 'none',
-                        stroke: '#000',
-                        strokeWidth: '1px',
-                      }}
-                    />
-                  </g>
-                )
-              })}
-            </g>
-          </svg>
-        </div>
+            Download
+          </a>
+        </>
       )}
     </>
   )
