@@ -1,5 +1,5 @@
 {
-  "name": "@nandenjin/ushio-map-export",
+  "name": "@nandenjin/map-factory",
   "private": true,
   "version": "0.0.0",
   "type": "module",
