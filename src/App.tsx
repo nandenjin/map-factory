@@ -35,7 +35,7 @@ function App() {
 
   // Sync URL hash to map state on load
   useEffect(() => {
-    const q = new URLSearchParams(hash)
+    const q = new URLSearchParams(hash.slice(1)) // Remove leading '#'
     const center = q.get('center')
     if (center) {
       setMapCenter(center.split(',').map(parseFloat) as LatLngTuple)
@@ -52,7 +52,10 @@ function App() {
 
       setBounds([coords.slice(0, 2), coords.slice(2, 4)] as LatLngBoundsLiteral)
     }
-  }, [hash]) // To be fix: double update when hash changes
+
+    // Only on load to avoid loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return OSMData.length > 0 ? (
     <OSMRenderer data={OSMData} bounds={bounds} />
@@ -68,6 +71,7 @@ function App() {
       }}
       bounds={bounds}
       onBoundsChange={(bounds) => {
+        console.log('onchange', bounds)
         setBounds([
           [bounds.getNorth(), bounds.getWest()],
           [bounds.getSouth(), bounds.getEast()],
