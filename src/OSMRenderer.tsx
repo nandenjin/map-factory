@@ -2,18 +2,35 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { Layer } from './Layer'
 import { osmFeatureKeys } from './features'
 import { mercator } from './lib/geo'
+import { LatLngBounds, type LatLngBoundsExpression } from 'leaflet'
 
-export function OSMRenderer({ data }: { data: string }) {
+type OSMRendererProps = { data: string; bounds?: LatLngBoundsExpression }
+
+export function OSMRenderer({ data, bounds }: OSMRendererProps) {
   const parser = new DOMParser()
   const doc = parser.parseFromString(data, 'text/xml')
   const errorNode = doc.querySelector('parsererror')
-  const bounds = doc.querySelector('bounds')
 
-  // ToDo: Extract geomapping to a separate class.
-  const minlat = +(bounds?.getAttribute('minlat') || 0)
-  const minlon = +(bounds?.getAttribute('minlon') || 0)
-  const maxlat = +(bounds?.getAttribute('maxlat') || 0)
-  const maxlon = +(bounds?.getAttribute('maxlon') || 0)
+  let minlat = 0,
+    minlon = 0,
+    maxlat = 0,
+    maxlon = 0
+
+  if (bounds) {
+    const b = bounds instanceof LatLngBounds ? bounds : new LatLngBounds(bounds)
+    minlat = b.getSouth()
+    minlon = b.getWest()
+    maxlat = b.getNorth()
+    maxlon = b.getEast()
+  } else {
+    const boundsElement = doc.querySelector('bounds')
+
+    // ToDo: Extract geomapping to a separate class.
+    minlat = +(boundsElement?.getAttribute('minlat') || 0)
+    minlon = +(boundsElement?.getAttribute('minlon') || 0)
+    maxlat = +(boundsElement?.getAttribute('maxlat') || 0)
+    maxlon = +(boundsElement?.getAttribute('maxlon') || 0)
+  }
 
   const [nwX, nwY] = mercator(maxlat, minlon)
   const [seX, seY] = mercator(minlat, maxlon)
