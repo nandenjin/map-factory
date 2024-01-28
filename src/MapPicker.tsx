@@ -13,7 +13,7 @@ import { createControlComponent } from '@react-leaflet/core'
 import { EditControl } from 'react-leaflet-draw'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet-draw/dist/leaflet.draw.css'
-import { useEffect, useRef } from 'react'
+import { useCallback, useRef } from 'react'
 import './MapPicker.css'
 import { queryAll } from './lib/overpass'
 
@@ -39,29 +39,28 @@ export function MapPicker({
   onBoundsChange,
   onCapture,
 }: MapPickerProps) {
-  const map = useRef<Map>(null)
   const editableLayers = useRef(null)
   const boundRectangle = useRef<LeafletRectangle>(null)
 
   // Capture drag event from map
-  useEffect(() => {
-    map.current?.on('moveend', () => {
-      const center = map.current?.getCenter()
+  // - https://qiita.com/70ki8suda/items/831727af51c572e10ba8
+  const mapRef = useCallback((map: Map) => {
+    if (!map) return
+
+    map.on('moveend', () => {
+      const center = map.getCenter()
       if (center) {
         onCenterChange?.([center.lat, center.lng])
       }
     })
-  }, [map, onCenterChange])
-
-  // Capture zoom event from map
-  useEffect(() => {
-    map.current?.on('zoomend', () => {
-      const zoom = map.current?.getZoom()
+    map.on('zoomend', () => {
+      const zoom = map.getZoom()
       if (zoom) {
         onZoomChange?.(zoom)
       }
     })
-  }, [map, onZoomChange])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   /**
    * Handle rectangle edit and fire onBoundsChange event
@@ -76,7 +75,7 @@ export function MapPicker({
   return (
     <>
       <MapContainer
-        ref={map}
+        ref={mapRef}
         center={center}
         zoom={zoom}
         style={{ width: '100%', height: '100%' }}
@@ -123,8 +122,7 @@ type MapPickerCaptureControlProps = ControlOptions & {
 const MapPickerCaptureControl = createControlComponent(
   ({ position, onCaptureRequest }: MapPickerCaptureControlProps) => {
     const MapInfo = Control.extend({
-      onAdd: (map: Map) => {
-        console.log(map)
+      onAdd: () => {
         const panel = DomUtil.create('div')
         const button = DomUtil.create('button', 'leaflet-bar capture-button')
         button.appendChild(document.createTextNode('Capture'))

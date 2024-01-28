@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { OSMRenderer } from './OSMRenderer'
 import { MapPicker } from './MapPicker'
 import { useHash } from 'react-use'
-import type { LatLngBoundsLiteral, LatLngTuple } from 'leaflet'
+import { type LatLngBoundsLiteral, type LatLngTuple } from 'leaflet'
 
 function App() {
   // Captured OSM data
@@ -11,18 +11,29 @@ function App() {
 
   // URL hash state
   const [hash, setHash] = useHash()
+  const q = new URLSearchParams(hash.slice(1)) // Remove leading '#'
 
   // Map
-  const [mapCenter, setMapCenter] = useState<LatLngTuple>([
-    36.081771, 140.113755,
-  ])
-  const [mapZoom, setMapZoom] = useState(16)
+  const mapCenterFromHash = q.get('center')?.split(',').map(parseFloat)
+  const [mapCenter, setMapCenter] = useState<LatLngTuple>(
+    (mapCenterFromHash as LatLngTuple) ?? [36.081771, 140.113755],
+  )
+  const mapZoomFromHash = +(q.get('zoom') ?? 0)
+  const [mapZoom, setMapZoom] = useState(mapZoomFromHash || 16)
 
   // Bounds to capture
-  const [bounds, setBounds] = useState<LatLngBoundsLiteral>([
-    [36.08493940373973, 140.10615613595058],
-    [36.0801983565214, 140.11746687730607],
-  ])
+  const boundCoordsFromHash = q.get('bounds')?.split(',').map(parseFloat)
+  const [bounds, setBounds] = useState<LatLngBoundsLiteral>(
+    boundCoordsFromHash
+      ? ([
+          boundCoordsFromHash.slice(0, 2),
+          boundCoordsFromHash.slice(2, 4),
+        ] as LatLngBoundsLiteral)
+      : [
+          [36.08493940373973, 140.10615613595058],
+          [36.0801983565214, 140.11746687730607],
+        ],
+  )
 
   // Sync map state to URL hash
   useEffect(() => {
@@ -32,30 +43,6 @@ function App() {
     q.set('zoom', mapZoom.toString())
     setHash(q.toString())
   }, [mapCenter, mapZoom, bounds, setHash])
-
-  // Sync URL hash to map state on load
-  useEffect(() => {
-    const q = new URLSearchParams(hash.slice(1)) // Remove leading '#'
-    const center = q.get('center')
-    if (center) {
-      setMapCenter(center.split(',').map(parseFloat) as LatLngTuple)
-    }
-
-    const zoom = q.get('zoom')
-    if (zoom) {
-      setMapZoom(+zoom)
-    }
-
-    const bounds = q.get('bounds')
-    if (bounds) {
-      const coords = bounds.split(',').map(parseFloat)
-
-      setBounds([coords.slice(0, 2), coords.slice(2, 4)] as LatLngBoundsLiteral)
-    }
-
-    // Only on load to avoid loop
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   return OSMData.length > 0 ? (
     <OSMRenderer data={OSMData} bounds={bounds} />
