@@ -4,12 +4,8 @@ import {
   type Rectangle as LeafletRectangle,
   type LatLngBounds,
   type LatLngBoundsLiteral,
-  Control,
-  DomUtil,
-  type ControlOptions,
 } from 'leaflet'
 import { MapContainer, TileLayer, Rectangle, FeatureGroup } from 'react-leaflet'
-import { createControlComponent } from '@react-leaflet/core'
 import { EditControl } from 'react-leaflet-draw'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet-draw/dist/leaflet.draw.css'
@@ -17,15 +13,11 @@ import { useCallback, useRef, useState } from 'react'
 import './MapPicker.css'
 import { queryAll } from './lib/overpass'
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Box,
   Button,
   Card,
   CardActions,
   CardContent,
-  CardHeader,
   Dialog,
   DialogActions,
   DialogContent,
