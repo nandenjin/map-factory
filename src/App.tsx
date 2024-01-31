@@ -4,6 +4,8 @@ import { OSMRenderer } from './OSMRenderer'
 import { MapPicker } from './MapPicker'
 import { useHash } from 'react-use'
 import { type LatLngBoundsLiteral, type LatLngTuple } from 'leaflet'
+import { Box } from '@mui/material'
+import { SiteHeader } from './SiteHeader'
 
 function App() {
   // Captured OSM data
@@ -44,28 +46,50 @@ function App() {
     setHash(q.toString())
   }, [mapCenter, mapZoom, bounds, setHash])
 
-  return OSMData.length > 0 ? (
-    <OSMRenderer data={OSMData} bounds={bounds} />
-  ) : (
-    <MapPicker
-      center={mapCenter}
-      onCenterChange={(center) => {
-        setMapCenter(center)
-      }}
-      zoom={mapZoom}
-      onZoomChange={(zoom) => {
-        setMapZoom(zoom)
-      }}
-      bounds={bounds}
-      onBoundsChange={(bounds) => {
-        console.log('onchange', bounds)
-        setBounds([
-          [bounds.getNorth(), bounds.getWest()],
-          [bounds.getSouth(), bounds.getEast()],
-        ])
-      }}
-      onCapture={setOSMData}
-    />
+  return (
+    <Box
+      width="100%"
+      height="100%"
+      display="grid"
+      gridTemplateRows={'auto 1fr'}
+    >
+      <Box>
+        <SiteHeader
+          currentStep="map"
+          onStepChangeRequest={(step) => {
+            switch (step) {
+              case 'map':
+                setOSMData('')
+                break
+            }
+          }}
+        />
+      </Box>
+      <Box>
+        {OSMData.length > 0 ? (
+          <OSMRenderer data={OSMData} bounds={bounds} />
+        ) : (
+          <MapPicker
+            center={mapCenter}
+            onCenterChange={(center) => {
+              setMapCenter(center)
+            }}
+            zoom={mapZoom}
+            onZoomChange={(zoom) => {
+              setMapZoom(zoom)
+            }}
+            bounds={bounds}
+            onBoundsChange={(bounds) => {
+              setBounds([
+                [bounds.getNorth(), bounds.getWest()],
+                [bounds.getSouth(), bounds.getEast()],
+              ])
+            }}
+            onCapture={setOSMData}
+          />
+        )}
+      </Box>
+    </Box>
   )
 }
 

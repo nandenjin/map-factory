@@ -3,6 +3,7 @@ import { Layer } from './Layer'
 import { osmFeatureKeys } from './features'
 import { mercator } from './lib/geo'
 import { LatLngBounds, type LatLngBoundsExpression } from 'leaflet'
+import { Button } from '@mui/material'
 
 type OSMRendererProps = { data: string; bounds?: LatLngBoundsExpression }
 
@@ -131,7 +132,8 @@ export function OSMRenderer({ data, bounds }: OSMRendererProps) {
       ) : (
         <>
           <div>{render()}</div>
-          <a
+          <Button
+            variant="contained"
             target="_blank"
             download={Date.now() + '.svg'}
             href={URL.createObjectURL(
@@ -141,7 +143,7 @@ export function OSMRenderer({ data, bounds }: OSMRendererProps) {
             )}
           >
             Download
-          </a>
+          </Button>
         </>
       )}
     </>

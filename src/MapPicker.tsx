@@ -13,9 +13,26 @@ import { createControlComponent } from '@react-leaflet/core'
 import { EditControl } from 'react-leaflet-draw'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet-draw/dist/leaflet.draw.css'
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import './MapPicker.css'
 import { queryAll } from './lib/overpass'
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  CardHeader,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  LinearProgress,
+  Typography,
+} from '@mui/material'
 
 type MapPickerProps = {
   center: LatLngTuple
@@ -41,23 +58,37 @@ export function MapPicker({
 }: MapPickerProps) {
   const editableLayers = useRef(null)
   const boundRectangle = useRef<LeafletRectangle>(null)
+  const [viewport, setViewport] = useState<LatLngBounds | null>(null)
+  const [downloading, setDownloading] = useState(false)
+  const [downloadProgress, setDownloadProgress] = useState(0)
 
   // Capture drag event from map
   // - https://qiita.com/70ki8suda/items/831727af51c572e10ba8
   const mapRef = useCallback((map: Map) => {
     if (!map) return
 
+    const handleBoundsUpdate = () => {
+      const bounds = map.getBounds()
+      console.log(bounds)
+      if (bounds) {
+        setViewport(bounds)
+      }
+    }
+
     map.on('moveend', () => {
       const center = map.getCenter()
       if (center) {
         onCenterChange?.([center.lat, center.lng])
       }
+      handleBoundsUpdate()
     })
+
     map.on('zoomend', () => {
       const zoom = map.getZoom()
       if (zoom) {
         onZoomChange?.(zoom)
       }
+      handleBoundsUpdate()
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -73,22 +104,17 @@ export function MapPicker({
   }
 
   return (
-    <>
+    <Box position="relative" style={{ width: '100%', height: '100%' }}>
       <MapContainer
         ref={mapRef}
         center={center}
         zoom={zoom}
-        style={{ width: '100%', height: '100%' }}
+        zoomControl={false}
+        style={{ width: '100%', height: '100%', position: 'relative' }}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-        />
-        <MapPickerCaptureControl
-          onCaptureRequest={async () => {
-            const osmData = await queryAll(bounds)
-            onCapture?.(osmData)
-          }}
         />
         <FeatureGroup ref={editableLayers}>
           <EditControl
@@ -111,27 +137,58 @@ export function MapPicker({
           ></Rectangle>
         </FeatureGroup>
       </MapContainer>
-    </>
+      <Card
+        style={{
+          position: 'absolute',
+          top: '30px',
+          left: '30px',
+          zIndex: 1000,
+        }}
+        hidden={downloading}
+      >
+        <CardContent>
+          <Typography variant="h6">How to use</Typography>
+          <Typography variant="body1">
+            Set area to capture on the map.
+          </Typography>
+        </CardContent>
+        <CardActions>
+          <Button
+            size="small"
+            color="primary"
+            onClick={async () => {
+              setDownloadProgress(0)
+              setDownloading(true)
+              const osmData = await queryAll(bounds)
+              setDownloadProgress(1) // To be implemented
+              setDownloading(false)
+              onCapture?.(osmData)
+            }}
+          >
+            Capture this area
+          </Button>
+          <Button
+            size="small"
+            color="secondary"
+            onClick={() => {
+              if (!viewport) return
+              onBoundsChange?.(viewport.pad(-0.2))
+            }}
+          >
+            Reset with viewport
+          </Button>
+        </CardActions>
+      </Card>
+      <Dialog keepMounted={true} open={downloading}>
+        <DialogTitle>Downloading map data...</DialogTitle>
+        <DialogContent>
+          <LinearProgress
+            variant={downloadProgress > 0 ? 'determinate' : 'indeterminate'}
+            value={downloadProgress * 100}
+          />
+        </DialogContent>
+        <DialogActions>{/* <Button>Cancel</Button> */}</DialogActions>
+      </Dialog>
+    </Box>
   )
 }
-
-type MapPickerCaptureControlProps = ControlOptions & {
-  onCaptureRequest?: () => unknown
-}
-
-const MapPickerCaptureControl = createControlComponent(
-  ({ position, onCaptureRequest }: MapPickerCaptureControlProps) => {
-    const MapInfo = Control.extend({
-      onAdd: () => {
-        const panel = DomUtil.create('div')
-        const button = DomUtil.create('button', 'leaflet-bar capture-button')
-        button.appendChild(document.createTextNode('Capture'))
-        button.addEventListener('click', () => onCaptureRequest?.())
-
-        panel.appendChild(button)
-        return panel
-      },
-    })
-    return new MapInfo({ position: position ?? 'topright' })
-  },
-)
