@@ -17,7 +17,7 @@ export function useViewId(): [string, (viewId: string) => void] {
     setHash(`#${viewId}!${hashParamString}`)
   }
 
-  return [viewId, setViewId] as const
+  return [viewId, setViewId]
 }
 
 /** Hook to get center point of map from URL hash state */
@@ -37,7 +37,7 @@ export function useMapCenter(): [LatLngTuple, (center: LatLngTuple) => void] {
     setHash('#' + q.toString())
   }
 
-  return [mapCenter, setMapCenter] as const
+  return [mapCenter, setMapCenter]
 }
 
 /** Hook to get zoom level of map from URL hash state */
@@ -51,7 +51,7 @@ export function useMapZoom(): [number, (zoom: number) => void] {
     setHash('#' + q.toString())
   }
 
-  return [mapZoom, setMapZoom] as const
+  return [mapZoom, setMapZoom]
 }
 
 /** Hook to get bounds of map from URL hash state */
@@ -81,5 +81,5 @@ export function useMapBoundsToCapture(): [
     setHash('#' + q.toString())
   }
 
-  return [mapBoundsToCapture, setMapBoundsToCapture] as const
+  return [mapBoundsToCapture, setMapBoundsToCapture]
 }
