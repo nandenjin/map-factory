@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { Layer } from './Layer'
-import { osmFeatureKeys } from './features'
-import { mercator } from './lib/geo'
+import { Layer } from '../../lib/Layer'
+import { osmFeatureKeys } from '../../lib/features'
+import { mercator } from '../../lib/geo'
 import { LatLngBounds, type LatLngBoundsExpression } from 'leaflet'
 import { Button } from '@mui/material'
 

@@ -1,11 +1,11 @@
 import './App.css'
 import { useEffect, useState } from 'react'
-import { OSMRenderer } from './OSMRenderer'
-import { MapPicker } from './MapPicker'
+import { OSMRenderer } from './components/ui/OSMRenderer'
+import { MapPicker } from './components/ui/MapPicker'
 import { useHash } from 'react-use'
 import { type LatLngBoundsLiteral, type LatLngTuple } from 'leaflet'
 import { Box } from '@mui/material'
-import { SiteHeader } from './SiteHeader'
+import { SiteHeader } from './components/layouts/SiteHeader'
 
 function App() {
   // Captured OSM data
