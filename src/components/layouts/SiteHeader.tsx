@@ -1,36 +1,24 @@
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Stepper,
-  Step,
-  StepLabel,
-} from '@mui/material'
+import { AppBar, Toolbar, Typography, Tabs, Tab } from '@mui/material'
+import { useViewId } from '../../hooks/hashState'
 
-type Step = 'map' | 'factory'
-
-type SiteHeaderProps = {
-  currentStep: Step
-  onStepChangeRequest?: (step: Step) => unknown
-}
-
-export function SiteHeader({
-  currentStep,
-  onStepChangeRequest,
-}: SiteHeaderProps) {
-  const steps = ['map', 'factory']
+export function SiteHeader() {
+  const [viewId, setViewId] = useViewId()
   return (
     <AppBar position="static">
       <Toolbar>
         <Typography variant="h6">Map factory</Typography>
-        <Stepper activeStep={steps.indexOf(currentStep)}>
-          <Step onClick={() => onStepChangeRequest?.('map')}>
-            <StepLabel>Select capture area</StepLabel>
-          </Step>
-          <Step>
-            <StepLabel>Download map</StepLabel>
-          </Step>
-        </Stepper>
+        <Tabs value={viewId}>
+          <Tab
+            label="Capture"
+            value="default"
+            onClick={() => setViewId('default')}
+          />
+          <Tab
+            label="Vector"
+            value="vector"
+            onClick={() => setViewId('vector')}
+          />
+        </Tabs>
       </Toolbar>
     </AppBar>
   )
