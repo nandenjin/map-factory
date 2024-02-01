@@ -10,7 +10,6 @@ import { EditControl } from 'react-leaflet-draw'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet-draw/dist/leaflet.draw.css'
 import { useCallback, useRef, useState } from 'react'
-import './MapPicker.css'
 import { queryAll } from '../../lib/overpass'
 import {
   Box,
