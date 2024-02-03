@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { Layer } from '../../lib/Layer'
+import { SVGMapLayer } from '../../lib/SVGMapLayer'
 import { osmFeatureKeys } from '../../lib/features'
 import { mercator } from '../../lib/geo'
 import { LatLngBounds, type LatLngBoundsExpression } from 'leaflet'
@@ -51,9 +51,9 @@ export function OSMRenderer({ data, bounds }: OSMRendererProps) {
     return [graphicX, graphicY]
   }
 
-  const renderLayer = (layer: Layer) => {
+  const renderLayer = (layer: SVGMapLayer) => {
     const content = layer.els.map((el) => {
-      if (el instanceof Layer) {
+      if (el instanceof SVGMapLayer) {
         return renderLayer(el)
       } else {
         const nds = el.getElementsByTagName('nd')
@@ -108,7 +108,7 @@ export function OSMRenderer({ data, bounds }: OSMRendererProps) {
   )
 
   const ways = Array.from(doc.querySelectorAll('way'))
-  const layer = new Layer('root')
+  const layer = new SVGMapLayer('root')
   for (const way of ways) {
     const tags = Array.from(way.getElementsByTagName('tag'))
     searchKey: for (const tag of tags) {

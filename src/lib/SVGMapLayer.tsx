@@ -1,24 +1,24 @@
-export class Layer {
+export class SVGMapLayer {
   id: string
-  els: (Element | Layer)[]
+  els: (Element | SVGMapLayer)[]
 
   constructor(id: string) {
     this.id = id
     this.els = []
   }
 
-  add(path: string[], el: Element | Layer) {
+  add(path: string[], el: Element | SVGMapLayer) {
     const key = path.shift()
 
     if (key) {
       for (const e of this.els) {
-        if (e instanceof Layer && e.id === key) {
+        if (e instanceof SVGMapLayer && e.id === key) {
           e.add(path, el)
           return
         }
       }
 
-      const l = new Layer(key)
+      const l = new SVGMapLayer(key)
       this.els.push(l)
     } else {
       this.els.push(el)
