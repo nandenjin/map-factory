@@ -17,11 +17,7 @@ function App() {
     >
       <SiteHeader />
       <Box>
-        <MapPickerView
-          display={viewId === 'default' ? 'block' : 'none'}
-          width="100%"
-          height="100%"
-        />
+        {viewId === 'default' && <MapPickerView width="100%" height="100%" />}
         <VectorMapView
           paused={viewId !== 'vector'}
           display={viewId === 'vector' ? 'block' : 'none'}
