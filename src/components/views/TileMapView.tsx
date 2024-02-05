@@ -1,4 +1,5 @@
 import {
+  Alert,
   Box,
   BoxProps,
   Button,
@@ -12,13 +13,14 @@ import {
   ToggleButtonGroup,
 } from '@mui/material'
 import { useMapBoundsToCapture, useMapZoom } from '../../hooks/hashState'
-import { ComponentProps, useEffect, useState } from 'react'
+import { ComponentProps, useEffect, useMemo, useState } from 'react'
 import {
   TileStitchRenderer,
   TileStitchRendererStatus,
 } from '../ui/TileStitchRenderer'
 import { LatLngBounds } from 'leaflet'
 import { TILES } from '../../lib/tiles'
+import { getTileByLatLng } from '../../lib/geo'
 
 type TileMapViewProps = { paused: boolean } & BoxProps
 
@@ -38,6 +40,21 @@ export function TileMapView({ paused, ...props }: TileMapViewProps) {
   const tileId = Object.keys(TILES).find(
     (key) => TILES[key] === tileUrlTemplate,
   )
+
+  const tilesCountTotal = useMemo(() => {
+    const bounds = new LatLngBounds(boundsToCapture)
+    const [x1, y1] = getTileByLatLng(
+      bounds.getNorth(),
+      bounds.getWest(),
+      zoomToCapture,
+    )
+    const [x2, y2] = getTileByLatLng(
+      bounds.getSouth(),
+      bounds.getEast(),
+      zoomToCapture,
+    )
+    return (x2 - x1 + 1) * (y2 - y1 + 1)
+  }, [boundsToCapture, zoomToCapture])
 
   const [rendererStatus, setRendererStatus] =
     useState<TileStitchRendererStatus>()
@@ -106,6 +123,13 @@ export function TileMapView({ paused, ...props }: TileMapViewProps) {
             />
           </Box>
         </FormControl>
+        {tilesCountTotal > 100 && (
+          <Alert severity="warning" sx={{ m: 1 }}>
+            This will send {tilesCountTotal} requests to the source server. Be
+            careful not to overload the source server, do this at your own own
+            responsibility.
+          </Alert>
+        )}
         <Button
           disabled={paused || !isUpdateRequired}
           onClick={generate}
