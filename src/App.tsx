@@ -4,6 +4,7 @@ import { SiteHeader } from './components/layouts/SiteHeader'
 import { MapPickerView } from './components/views/MapPickerView'
 import { VectorMapView } from './components/views/VectorMapView'
 import { useViewId } from './hooks/hashState'
+import { TileMapView } from './components/views/TileMapView'
 
 function App() {
   const [viewId] = useViewId()
@@ -24,6 +25,12 @@ function App() {
         <VectorMapView
           paused={viewId !== 'vector'}
           display={viewId === 'vector' ? 'block' : 'none'}
+          width="100%"
+          height="100%"
+        />
+        <TileMapView
+          paused={viewId !== 'tile'}
+          display={viewId === 'tile' ? 'block' : 'none'}
           width="100%"
           height="100%"
         />

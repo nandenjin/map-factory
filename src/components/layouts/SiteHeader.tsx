@@ -18,6 +18,7 @@ export function SiteHeader() {
             value="vector"
             onClick={() => setViewId('vector')}
           />
+          <Tab label="Tile" value="tile" onClick={() => setViewId('tile')} />
         </Tabs>
       </Toolbar>
     </AppBar>
