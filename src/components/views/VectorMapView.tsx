@@ -53,6 +53,7 @@ export function VectorMapView({ paused, ...props }: VectorMapViewProps) {
     if (downloading) return
     if (bigDataWarningRequired && !bigDataWarningConfirmed) return
     if (updateRequired) {
+      console.log('queryAll')
       setDownloading(true)
       setOSMData(null)
       queryAll(mapBoundsToCapture).then((data) => {
@@ -63,7 +64,7 @@ export function VectorMapView({ paused, ...props }: VectorMapViewProps) {
     }
     // Download should only be performed by updateRequired or bigDataWarningConfirmed
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [updateRequired, bigDataWarningRequired, bigDataWarningConfirmed])
+  }, [paused, updateRequired, bigDataWarningRequired, bigDataWarningConfirmed])
 
   const numberFormat = new Intl.NumberFormat()
 
