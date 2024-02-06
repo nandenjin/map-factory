@@ -6,12 +6,14 @@ import {
   FormControl,
   FormHelperText,
   LinearProgress,
+  Link,
   MenuItem,
   Select,
   SpeedDial,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
+  Typography,
 } from '@mui/material'
 import { useMapBoundsToCapture, useMapZoom } from '../../hooks/hashState'
 import { ComponentProps, useEffect, useMemo, useState } from 'react'
@@ -23,7 +25,7 @@ import { LatLngBounds } from 'leaflet'
 import { TILES } from '../../lib/tiles'
 import { getTileByLatLng } from '../../lib/geo'
 import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
-import { Download } from '@mui/icons-material'
+import { Download, OpenInNew } from '@mui/icons-material'
 
 type TileMapViewProps = { paused: boolean } & BoxProps
 
@@ -37,12 +39,15 @@ export function TileMapView({ paused, ...props }: TileMapViewProps) {
     }
   }, [mapZoom, zoomToCapture])
 
+  const defaultTileSource = TILES['GSI.std']
   const [tileUrlTemplate, setTileUrlTemplate] = useState<string>(
-    TILES['GSI.std'],
+    defaultTileSource.urlTemplate,
   )
   const tileId = Object.keys(TILES).find(
-    (key) => TILES[key] === tileUrlTemplate,
+    (key) => TILES[key].urlTemplate === tileUrlTemplate,
   )
+  const tileAttribution = tileId ? TILES[tileId]?.attribution : null
+  const tileAttributionLink = tileId ? TILES[tileId]?.attributionLink : null
 
   const tilesCountTotal = useMemo(() => {
     const bounds = new LatLngBounds(boundsToCapture)
@@ -110,33 +115,57 @@ export function TileMapView({ paused, ...props }: TileMapViewProps) {
               ))}
             </ToggleButtonGroup>
           </FormControl>
-          <FormControl sx={{ m: 1 }} fullWidth>
-            <FormHelperText>Tile source</FormHelperText>
-            <Box display="flex">
-              <Select
-                value={tileId}
-                onChange={(e) => {
-                  setTileUrlTemplate(TILES[e.target.value as string])
-                }}
-                label="Tile source"
-                sx={{ m: 1 }}
-              >
-                <MenuItem value={undefined}>Custom</MenuItem>
-                {Object.keys(TILES).map((key) => (
-                  <MenuItem key={key} value={key}>
-                    {key}
-                  </MenuItem>
-                ))}
-              </Select>
-              <TextField
-                value={tileUrlTemplate}
-                onChange={(e) => setTileUrlTemplate(e.target.value)}
-                label="Tile URL"
-                fullWidth
-                sx={{ m: 1 }}
-              />
+          <Box sx={{ m: 1, width: '100%' }}>
+            <FormControl fullWidth>
+              <FormHelperText>Tile source</FormHelperText>
+              <Box display="flex">
+                <Select
+                  value={tileId}
+                  onChange={(e) => {
+                    setTileUrlTemplate(
+                      TILES[e.target.value as string].urlTemplate,
+                    )
+                  }}
+                  label="Tile source"
+                  sx={{ m: 1 }}
+                >
+                  <MenuItem value={undefined}>Custom</MenuItem>
+                  {Object.keys(TILES).map((key) => (
+                    <MenuItem key={key} value={key}>
+                      {key}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <TextField
+                  value={tileUrlTemplate}
+                  onChange={(e) => setTileUrlTemplate(e.target.value)}
+                  label="Tile URL"
+                  fullWidth
+                  sx={{ m: 1 }}
+                />
+              </Box>
+            </FormControl>
+            <Box sx={{ m: 1 }}>
+              {tileAttribution && (
+                <Typography variant="body2">
+                  Attribution:{' '}
+                  {tileAttributionLink ? (
+                    <Link
+                      variant="body2"
+                      href={tileAttributionLink}
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      {tileAttribution}
+                      <OpenInNew fontSize="inherit" />
+                    </Link>
+                  ) : (
+                    tileAttribution
+                  )}
+                </Typography>
+              )}
             </Box>
-          </FormControl>
+          </Box>
           {tilesCountTotal > 100 && (
             <Alert severity="warning" sx={{ m: 1 }}>
               This will send {numberFormat.format(tilesCountTotal)} requests to

@@ -4,6 +4,7 @@ import {
   BoxProps,
   Button,
   LinearProgress,
+  Link,
   SpeedDial,
   Typography,
 } from '@mui/material'
@@ -14,7 +15,7 @@ import { LatLngBounds } from 'leaflet'
 import { queryAll } from '../../lib/overpass'
 import { getMetersByLatLng } from '../../lib/geo'
 import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
-import { Download } from '@mui/icons-material'
+import { Download, OpenInNew } from '@mui/icons-material'
 
 type VectorMapViewProps = { paused?: boolean } & BoxProps
 
@@ -98,6 +99,19 @@ export function VectorMapView({ paused, ...props }: VectorMapViewProps) {
               />
             </TransformComponent>
           </TransformWrapper>
+          <Box sx={{ position: 'fixed', bottom: 10, left: 10 }}>
+            <Typography variant="body2">
+              Attribution:{' '}
+              <Link
+                href="https://www.openstreetmap.org/copyright"
+                target="_blank"
+                rel="noopener"
+              >
+                &copy; OpenStreetMap contributors.
+                <OpenInNew fontSize="inherit" />
+              </Link>
+            </Typography>
+          </Box>
           <SpeedDial
             ariaLabel="Download"
             sx={{
