@@ -81,9 +81,11 @@ export function OSMRenderer({ data, bounds, onRendered }: OSMRendererProps) {
     }
 
     const renderLayer = (layer: SVGMapLayer) => {
-      const content = layer.els.map((el) => {
+      const content: JSX.Element[] = []
+
+      for (const el of layer.els) {
         if (el instanceof SVGMapLayer) {
-          return renderLayer(el)
+          content.push(renderLayer(el))
         } else {
           const nds = el.getElementsByTagName('nd')
 
@@ -97,7 +99,7 @@ export function OSMRenderer({ data, bounds, onRendered }: OSMRendererProps) {
               +(node?.getAttribute('lon') || 0),
             ).join(',')
           })
-          return (
+          content.push(
             <g id={el.id} key={el.id}>
               <polyline
                 points={points.join(',')}
@@ -107,10 +109,10 @@ export function OSMRenderer({ data, bounds, onRendered }: OSMRendererProps) {
                   strokeWidth: '1px',
                 }}
               />
-            </g>
+            </g>,
           )
         }
-      })
+      }
 
       if (layer.id === 'root') {
         return <g>{content}</g>
