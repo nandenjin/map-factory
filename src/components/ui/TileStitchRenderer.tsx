@@ -155,8 +155,8 @@ const generateImage = async (
     const y = Math.floor(i / tilesCountWidth)
     ctx.drawImage(
       tiles[i],
-      (x - offsetX) * tileWidth,
-      (y - offsetY) * tileHeight,
+      Math.floor((x - offsetX) * tileWidth),
+      Math.floor((y - offsetY) * tileHeight),
     )
   }
 
