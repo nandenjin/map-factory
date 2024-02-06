@@ -8,6 +8,7 @@ import {
   LinearProgress,
   MenuItem,
   Select,
+  SpeedDial,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
@@ -21,6 +22,8 @@ import {
 import { LatLngBounds } from 'leaflet'
 import { TILES } from '../../lib/tiles'
 import { getTileByLatLng } from '../../lib/geo'
+import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
+import { Download } from '@mui/icons-material'
 
 type TileMapViewProps = { paused: boolean } & BoxProps
 
@@ -79,89 +82,133 @@ export function TileMapView({ paused, ...props }: TileMapViewProps) {
     })
   }
 
+  const [renderedImage, setRenderedImage] = useState<Blob | null>(null)
+  const renderedImageUrl = useMemo(() => {
+    if (renderedImage) {
+      return URL.createObjectURL(renderedImage)
+    }
+    return null
+  }, [renderedImage])
+
   const numberFormat = new Intl.NumberFormat()
 
   return (
     <Box {...props}>
-      <Box display="flex" flexWrap={'wrap'}>
-        <FormControl sx={{ m: 1 }}>
-          <FormHelperText>Zoom level</FormHelperText>
-          <ToggleButtonGroup
-            value={zoomToCapture}
-            onChange={(_, zoom) => setZoomToCapture(zoom)}
-            exclusive
-          >
-            {[14, 15, 16, 17, 18].map((v) => (
-              <ToggleButton key={v} value={v} disabled={v < mapZoom}>
-                {v}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-        </FormControl>
-        <FormControl sx={{ m: 1 }} fullWidth>
-          <FormHelperText>Tile source</FormHelperText>
-          <Box display="flex">
-            <Select
-              value={tileId}
-              onChange={(e) => {
-                setTileUrlTemplate(TILES[e.target.value as string])
-              }}
-              label="Tile source"
-              sx={{ m: 1 }}
+      <Box display="flex" flexDirection="column" height="100%">
+        <Box display="flex" flexWrap={'wrap'}>
+          <FormControl sx={{ m: 1 }}>
+            <FormHelperText>Zoom level</FormHelperText>
+            <ToggleButtonGroup
+              value={zoomToCapture}
+              onChange={(_, zoom) => setZoomToCapture(zoom)}
+              exclusive
             >
-              <MenuItem value={undefined}>Custom</MenuItem>
-              {Object.keys(TILES).map((key) => (
-                <MenuItem key={key} value={key}>
-                  {key}
-                </MenuItem>
+              {[14, 15, 16, 17, 18].map((v) => (
+                <ToggleButton key={v} value={v} disabled={v < mapZoom}>
+                  {v}
+                </ToggleButton>
               ))}
-            </Select>
-            <TextField
-              value={tileUrlTemplate}
-              onChange={(e) => setTileUrlTemplate(e.target.value)}
-              label="Tile URL"
-              fullWidth
-              sx={{ m: 1 }}
-            />
-          </Box>
-        </FormControl>
-        {tilesCountTotal > 100 && (
-          <Alert severity="warning" sx={{ m: 1 }}>
-            This will send {numberFormat.format(tilesCountTotal)} requests to
-            the source server. Be careful not to overload the source server, do
-            this at your own own responsibility.
-          </Alert>
-        )}
-        <Button
-          disabled={paused || !isUpdateRequired}
-          onClick={generate}
-          sx={{ m: 1 }}
-        >
-          Generate
-        </Button>
-      </Box>
-      {(rendererStatus === 'downloading' && (
-        <LinearProgress
-          variant="determinate"
-          value={(rendererProgress.loaded / rendererProgress.total) * 100}
-        />
-      )) ||
-        (rendererStatus === 'generating' && <LinearProgress />)}
-      {rendererProps && (
-        <TileStitchRenderer
-          bounds={rendererProps.bounds}
-          zoom={rendererProps.zoom}
-          tileUrlTemplate={rendererProps.tileUrlTemplate}
-          onDownloadProgress={(loaded, total) =>
-            setRendererProgress({
-              loaded,
-              total,
-            })
+            </ToggleButtonGroup>
+          </FormControl>
+          <FormControl sx={{ m: 1 }} fullWidth>
+            <FormHelperText>Tile source</FormHelperText>
+            <Box display="flex">
+              <Select
+                value={tileId}
+                onChange={(e) => {
+                  setTileUrlTemplate(TILES[e.target.value as string])
+                }}
+                label="Tile source"
+                sx={{ m: 1 }}
+              >
+                <MenuItem value={undefined}>Custom</MenuItem>
+                {Object.keys(TILES).map((key) => (
+                  <MenuItem key={key} value={key}>
+                    {key}
+                  </MenuItem>
+                ))}
+              </Select>
+              <TextField
+                value={tileUrlTemplate}
+                onChange={(e) => setTileUrlTemplate(e.target.value)}
+                label="Tile URL"
+                fullWidth
+                sx={{ m: 1 }}
+              />
+            </Box>
+          </FormControl>
+          {tilesCountTotal > 100 && (
+            <Alert severity="warning" sx={{ m: 1 }}>
+              This will send {numberFormat.format(tilesCountTotal)} requests to
+              the source server. Be careful not to overload the source server,
+              do this at your own own responsibility.
+            </Alert>
+          )}
+          <Button
+            disabled={paused || !isUpdateRequired}
+            onClick={generate}
+            sx={{ m: 1 }}
+          >
+            Generate
+          </Button>
+        </Box>
+        {(rendererStatus === 'downloading' && (
+          <LinearProgress
+            variant="determinate"
+            value={(rendererProgress.loaded / rendererProgress.total) * 100}
+          />
+        )) ||
+          (rendererStatus === 'generating' && <LinearProgress />)}
+
+        <TransformWrapper centerOnInit>
+          <TransformComponent
+            wrapperStyle={{
+              width: '100%',
+              backgroundColor: '#ccc',
+              flexGrow: 1,
+            }}
+          >
+            {rendererProps && (
+              <TileStitchRenderer
+                bounds={rendererProps.bounds}
+                zoom={rendererProps.zoom}
+                tileUrlTemplate={rendererProps.tileUrlTemplate}
+                onDownloadProgress={(loaded, total) =>
+                  setRendererProgress({
+                    loaded,
+                    total,
+                  })
+                }
+                onComplete={setRenderedImage}
+                onStateChanged={setRendererStatus}
+                style={{ maxWidth: '100%' }}
+              />
+            )}
+          </TransformComponent>
+        </TransformWrapper>
+        <SpeedDial
+          ariaLabel="Download"
+          icon={<Download />}
+          sx={{
+            position: 'fixed',
+            bottom: 32,
+            right: 32,
+            visibility: renderedImageUrl ? 'visible' : 'hidden',
+          }}
+          onClick={
+            renderedImageUrl
+              ? () => {
+                  const bounds = new LatLngBounds(boundsToCapture)
+                  const serializedBounds = bounds.toBBoxString()
+                  const link = document.createElement('a')
+                  link.href = renderedImageUrl
+                  link.download = `map-factory_${serializedBounds}.png`
+                  link.click()
+                }
+              : undefined
           }
-          onStateChanged={setRendererStatus}
-          style={{ maxWidth: '100%' }}
         />
-      )}
+      </Box>
     </Box>
   )
 }

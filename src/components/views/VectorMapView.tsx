@@ -4,6 +4,7 @@ import {
   BoxProps,
   Button,
   LinearProgress,
+  SpeedDial,
   Typography,
 } from '@mui/material'
 import { OSMRenderer } from '../ui/OSMRenderer'
@@ -12,6 +13,8 @@ import { useMapBoundsToCapture, useViewId } from '../../hooks/hashState'
 import { LatLngBounds } from 'leaflet'
 import { queryAll } from '../../lib/overpass'
 import { getMetersByLatLng } from '../../lib/geo'
+import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
+import { Download } from '@mui/icons-material'
 
 type VectorMapViewProps = { paused?: boolean } & BoxProps
 
@@ -53,7 +56,6 @@ export function VectorMapView({ paused, ...props }: VectorMapViewProps) {
     if (downloading) return
     if (bigDataWarningRequired && !bigDataWarningConfirmed) return
     if (updateRequired) {
-      console.log('queryAll')
       setDownloading(true)
       setOSMData(null)
       queryAll(mapBoundsToCapture).then((data) => {
@@ -66,12 +68,56 @@ export function VectorMapView({ paused, ...props }: VectorMapViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paused, updateRequired, bigDataWarningRequired, bigDataWarningConfirmed])
 
+  const [renderedSVG, setRenderedSVG] = useState<string | null>(null)
+  const renderedURL = useMemo(
+    () => (renderedSVG ? URL.createObjectURL(new Blob([renderedSVG])) : null),
+    [renderedSVG],
+  )
   const numberFormat = new Intl.NumberFormat()
 
   return (
     <Box {...props}>
       {(osmData && capturedBounds && (
-        <OSMRenderer data={osmData} bounds={capturedBounds} />
+        <>
+          <TransformWrapper centerOnInit>
+            <TransformComponent
+              wrapperStyle={{
+                width: '100%',
+                height: '100%',
+                backgroundColor: '#ccc',
+              }}
+              contentStyle={{
+                backgroundColor: '#fff',
+                lineHeight: 0,
+              }}
+            >
+              <OSMRenderer
+                data={osmData}
+                bounds={capturedBounds}
+                onRendered={setRenderedSVG}
+              />
+            </TransformComponent>
+          </TransformWrapper>
+          <SpeedDial
+            ariaLabel="Download"
+            sx={{
+              position: 'absolute',
+              bottom: 32,
+              right: 32,
+              visibility: renderedURL ? 'visible' : 'hidden',
+            }}
+            icon={<Download />}
+            onClick={() => {
+              if (renderedURL) {
+                const serializedBounds = capturedBounds.toBBoxString()
+                const link = document.createElement('a')
+                link.href = renderedURL
+                link.download = `map-factory_${serializedBounds}.svg`
+                link.click()
+              }
+            }}
+          />
+        </>
       )) || (
         <Box
           width="100%"

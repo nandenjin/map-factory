@@ -17,7 +17,7 @@ type TileStitchRendererProps = HTMLAttributes<HTMLImageElement> & {
   zoom: number
   tileUrlTemplate: string
   onDownloadProgress?: (loaded: number, total: number) => void
-  onLoad?: () => void
+  onComplete?: (image: Blob) => void
   onError?: (error: Error) => void
   onStateChanged?: (state: TileStitchRendererStatus) => void
 }
@@ -27,7 +27,7 @@ export function TileStitchRenderer({
   zoom,
   tileUrlTemplate,
   onDownloadProgress,
-  onLoad,
+  onComplete,
   onError,
   onStateChanged,
   ...props
@@ -61,9 +61,10 @@ export function TileStitchRenderer({
     fetchTilesByBoundsAndZoom(tileUrlTemplate, bounds, zoom, onDownloadProgress)
       .then((tiles) => generateImage(tiles, bounds, zoom))
       .then((blob) => {
-        setRenderedImageUrl(URL.createObjectURL(blob))
+        const url = URL.createObjectURL(blob)
+        setRenderedImageUrl(url)
         onStateChanged?.('loaded')
-        onLoad?.()
+        onComplete?.(blob)
         setGenerating(false)
       })
       .catch((e) => {
@@ -160,5 +161,7 @@ const generateImage = async (
     )
   }
 
-  return canvas.convertToBlob()
+  return canvas.convertToBlob({
+    type: 'image/png',
+  })
 }
