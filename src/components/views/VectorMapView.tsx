@@ -27,6 +27,7 @@ export function VectorMapView({ paused, ...props }: VectorMapViewProps) {
     if (paused) return
     if (!capturedBounds || !capturedBounds.equals(mapBoundsToCapture)) {
       setDownloading(true)
+      setOSMData(null)
       setCapturedBounds(new LatLngBounds(mapBoundsToCapture))
       queryAll(mapBoundsToCapture).then((data) => {
         setOSMData(data)
