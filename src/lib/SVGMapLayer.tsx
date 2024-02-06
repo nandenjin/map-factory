@@ -19,6 +19,7 @@ export class SVGMapLayer {
       }
 
       const l = new SVGMapLayer(key)
+      l.add(path, el)
       this.els.push(l)
     } else {
       this.els.push(el)
