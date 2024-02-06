@@ -3,14 +3,20 @@ import { SVGMapLayer } from '../../lib/SVGMapLayer'
 import { osmFeatureKeys } from '../../lib/features'
 import { mercator } from '../../lib/geo'
 import { LatLngBounds, type LatLngBoundsExpression } from 'leaflet'
-import { Button } from '@mui/material'
+import { useEffect, useMemo } from 'react'
 
-type OSMRendererProps = { data: string; bounds?: LatLngBoundsExpression }
+type OSMRendererProps = {
+  data: string
+  bounds?: LatLngBoundsExpression
+  onRendered?: (svgString: string) => void
+}
 
-export function OSMRenderer({ data, bounds }: OSMRendererProps) {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(data, 'text/xml')
-  const errorNode = doc.querySelector('parsererror')
+export function OSMRenderer({ data, bounds, onRendered }: OSMRendererProps) {
+  const doc = useMemo(
+    () => new DOMParser().parseFromString(data, 'text/xml'),
+    [data],
+  )
+  const isError = !!doc.querySelector('parsererror')
 
   let minlat = 0,
     minlon = 0,
@@ -38,101 +44,111 @@ export function OSMRenderer({ data, bounds }: OSMRendererProps) {
   const scale = 1000 / (nwX - seX)
   const aspect = (seX - nwX) / (nwY - seY)
 
-  /**
-   * Converts latitude and longitude coordinates to graphic XY coordinates.
-   * @param lat The latitude coordinate.
-   * @param lon The longitude coordinate.
-   * @returns An array containing the graphic X and Y coordinates.
-   */
-  const toGraphicXY = (lat: number, lon: number) => {
-    const [x, y] = mercator(lat, lon)
-    const graphicX = -(x - nwX) * scale
-    const graphicY = -(nwY - y) * scale
-    return [graphicX, graphicY]
-  }
-
-  const renderLayer = (layer: SVGMapLayer) => {
-    const content = layer.els.map((el) => {
-      if (el instanceof SVGMapLayer) {
-        return renderLayer(el)
-      } else {
-        const nds = el.getElementsByTagName('nd')
-
-        const points = Array.from(nds).map((nd) => {
-          const ref = nd.getAttribute('ref')
-          if (!ref) return null
-
-          const node = doc.getElementById(ref)
-          return toGraphicXY(
-            +(node?.getAttribute('lat') || 0),
-            +(node?.getAttribute('lon') || 0),
-          ).join(',')
-        })
-        return (
-          <g id={el.id} key={el.id}>
-            <polyline
-              points={points.join(',')}
-              style={{
-                fill: 'none',
-                stroke: '#000',
-                strokeWidth: '1px',
-              }}
-            />
-          </g>
-        )
-      }
-    })
-
-    if (layer.id === 'root') {
-      return <g>{content}</g>
-    } else {
-      return (
-        <g id={layer.id} key={layer.id}>
-          {content}
-        </g>
-      )
-    }
-  }
-
-  const render = () => (
-    <svg
-      version="1.1"
-      xmlns="http://www.w3.org/2000/svg"
-      width="800"
-      height={800 / aspect}
-      viewBox={[0, 0, 1000, 1000 / aspect].join(',')}
-      style={{ border: '1px solid #000' }}
-    >
-      {renderLayer(layer)}
-    </svg>
-  )
-
   const ways = Array.from(doc.querySelectorAll('way'))
-  const layer = new SVGMapLayer('root')
-  for (const way of ways) {
-    const tags = Array.from(way.getElementsByTagName('tag'))
-    searchKey: for (const tag of tags) {
-      const k = tag.getAttribute('k')
-      for (const key of osmFeatureKeys) {
-        if (k === key) {
-          const v = tag.getAttribute('v')
-          if (v) {
-            layer.add([k, v], way)
+  const layer = useMemo(() => {
+    const l = new SVGMapLayer('root')
+    for (const way of ways) {
+      const tags = Array.from(way.getElementsByTagName('tag'))
+      searchKey: for (const tag of tags) {
+        const k = tag.getAttribute('k')
+        for (const key of osmFeatureKeys) {
+          if (k === key) {
+            const v = tag.getAttribute('v')
+            if (v) {
+              l.add([k, v], way)
+            }
+            break searchKey
           }
-          break searchKey
         }
       }
     }
-  }
+
+    return l
+  }, [ways])
+
+  const renderedElement = useMemo(() => {
+    /**
+     * Converts latitude and longitude coordinates to graphic XY coordinates.
+     * @param lat The latitude coordinate.
+     * @param lon The longitude coordinate.
+     * @returns An array containing the graphic X and Y coordinates.
+     */
+    const toGraphicXY = (lat: number, lon: number) => {
+      const [x, y] = mercator(lat, lon)
+      const graphicX = -(x - nwX) * scale
+      const graphicY = -(nwY - y) * scale
+      return [graphicX, graphicY]
+    }
+
+    const renderLayer = (layer: SVGMapLayer) => {
+      const content = layer.els.map((el) => {
+        if (el instanceof SVGMapLayer) {
+          return renderLayer(el)
+        } else {
+          const nds = el.getElementsByTagName('nd')
+
+          const points = Array.from(nds).map((nd) => {
+            const ref = nd.getAttribute('ref')
+            if (!ref) return null
+
+            const node = doc.getElementById(ref)
+            return toGraphicXY(
+              +(node?.getAttribute('lat') || 0),
+              +(node?.getAttribute('lon') || 0),
+            ).join(',')
+          })
+          return (
+            <g id={el.id} key={el.id}>
+              <polyline
+                points={points.join(',')}
+                style={{
+                  fill: 'none',
+                  stroke: '#000',
+                  strokeWidth: '1px',
+                }}
+              />
+            </g>
+          )
+        }
+      })
+
+      if (layer.id === 'root') {
+        return <g>{content}</g>
+      } else {
+        return (
+          <g id={layer.id} key={layer.id}>
+            {content}
+          </g>
+        )
+      }
+    }
+
+    return (
+      <svg
+        version="1.1"
+        xmlns="http://www.w3.org/2000/svg"
+        width="800"
+        height={800 / aspect}
+        viewBox={[0, 0, 1000, 1000 / aspect].join(',')}
+        style={{ border: '1px solid #000' }}
+      >
+        {renderLayer(layer)}
+      </svg>
+    )
+  }, [aspect, doc, layer, nwX, nwY, scale])
+
+  useEffect(() => {
+    onRendered?.(renderToStaticMarkup(renderedElement))
+  }, [onRendered, renderedElement])
 
   return (
     <>
-      {errorNode ? (
+      {isError ? (
         <div>Parse error</div>
       ) : (
         <>
-          <div>{render()}</div>
-          <Button
+          <div>{renderedElement}</div>
+          {/* <Button
             variant="contained"
             target="_blank"
             download={Date.now() + '.svg'}
@@ -143,7 +159,7 @@ export function OSMRenderer({ data, bounds }: OSMRendererProps) {
             )}
           >
             Download
-          </Button>
+          </Button> */}
         </>
       )}
     </>
