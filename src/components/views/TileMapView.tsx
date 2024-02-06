@@ -231,7 +231,7 @@ export function TileMapView({ paused, ...props }: TileMapViewProps) {
                   const serializedBounds = bounds.toBBoxString()
                   const link = document.createElement('a')
                   link.href = renderedImageUrl
-                  link.download = `map-factory_${serializedBounds}.png`
+                  link.download = `map-factory_${tileId}_${serializedBounds}.png`
                   link.click()
                 }
               : undefined
