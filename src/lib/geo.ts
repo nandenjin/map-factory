@@ -20,7 +20,7 @@ export const mercator = (lat: number, lon: number): [x: number, y: number] => {
  * @param lng - The longitude coordinate.
  * @returns An array containing the x and y coordinates in meters.
  */
-const getMetersByLatLng = function (lat: number, lng: number) {
+export const getMetersByLatLng = function (lat: number, lng: number) {
   const x = (lng * 20037508.34) / 180.0
   let y =
     Math.log(Math.tan(((90.0 + lat) * Math.PI) / 360.0)) / (Math.PI / 180.0)

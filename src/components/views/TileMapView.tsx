@@ -79,6 +79,8 @@ export function TileMapView({ paused, ...props }: TileMapViewProps) {
     })
   }
 
+  const numberFormat = new Intl.NumberFormat()
+
   return (
     <Box {...props}>
       <Box display="flex" flexWrap={'wrap'}>
@@ -125,9 +127,9 @@ export function TileMapView({ paused, ...props }: TileMapViewProps) {
         </FormControl>
         {tilesCountTotal > 100 && (
           <Alert severity="warning" sx={{ m: 1 }}>
-            This will send {tilesCountTotal} requests to the source server. Be
-            careful not to overload the source server, do this at your own own
-            responsibility.
+            This will send {numberFormat.format(tilesCountTotal)} requests to
+            the source server. Be careful not to overload the source server, do
+            this at your own own responsibility.
           </Alert>
         )}
         <Button
