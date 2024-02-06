@@ -1,10 +1,15 @@
 import {
   Box,
   BoxProps,
-  Button,
   Card,
   CardActions,
   CardContent,
+  Divider,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
   Typography,
 } from '@mui/material'
 import { useState } from 'react'
@@ -16,6 +21,7 @@ import {
   useViewId,
 } from '../../hooks/hashState'
 import { LatLngBounds } from 'leaflet'
+import { GridView, Polyline } from '@mui/icons-material'
 
 type MapPickerViewProps = BoxProps
 
@@ -38,41 +44,77 @@ export function MapPickerView({ ...props }: MapPickerViewProps) {
           onZoomChange={setMapZoom}
           onBoundsChange={onBoundsChange}
         />
-        <Card
-          style={{
-            position: 'absolute',
-            top: '30px',
-            left: '30px',
-            zIndex: 1000,
-          }}
-        >
-          <CardContent>
-            <Typography variant="h6">How to use</Typography>
-            <Typography variant="body1">
-              Set area to capture on the map.
-            </Typography>
-          </CardContent>
-          <CardActions>
-            <Button
-              size="small"
-              color="primary"
-              onClick={() => setViewId('vector')}
-            >
-              Capture this area
-            </Button>
-            <Button
-              size="small"
-              color="secondary"
-              onClick={() => {
-                if (!mapBounds) return
-                setBoundsToCapture(mapBounds.pad(-0.2))
-              }}
-            >
-              Reset with viewport
-            </Button>
-          </CardActions>
-        </Card>
+        <MapPickerViewCard
+          setViewId={setViewId}
+          mapBounds={mapBounds}
+          setBoundsToCapture={setBoundsToCapture}
+        />
       </Box>
     </Box>
   )
 }
+
+type MapPickerViewCardProps = {
+  setViewId: (id: string) => void
+  mapBounds: LatLngBounds | null
+  setBoundsToCapture: (bounds: LatLngBounds) => void
+}
+
+const MapPickerViewCard = ({
+  setViewId,
+  mapBounds,
+  setBoundsToCapture,
+}: MapPickerViewCardProps) => (
+  <Card
+    style={{
+      position: 'absolute',
+      top: '30px',
+      left: '30px',
+      zIndex: 1000,
+      width: '20rem',
+    }}
+  >
+    <CardContent>
+      <Typography variant="h6">About</Typography>
+      <Typography variant="body1">
+        map-factory is a tool to generate maps by downloading OpenStreetMap data
+        or stitching tiles from any source.
+      </Typography>
+      <Typography variant="body2" marginTop={1}>
+        Set the bounds to capture and go to desired tool view.
+      </Typography>
+    </CardContent>
+    <CardActions>
+      <List sx={{ width: '100%' }}>
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => setViewId('vector')}>
+            <ListItemIcon>
+              <Polyline />
+            </ListItemIcon>
+            <ListItemText primary="Vector" />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => setViewId('tile')}>
+            <ListItemIcon>
+              <GridView />
+            </ListItemIcon>
+            <ListItemText primary="Tile stitcher" />
+          </ListItemButton>
+        </ListItem>
+
+        <Divider />
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() => {
+              if (!mapBounds) return
+              setBoundsToCapture(mapBounds.pad(-0.2))
+            }}
+          >
+            <ListItemText primary="Fit bounds to viewport" />
+          </ListItemButton>
+        </ListItem>
+      </List>
+    </CardActions>
+  </Card>
+)
