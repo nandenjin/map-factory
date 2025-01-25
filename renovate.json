@@ -7,18 +7,9 @@
     "enabled": true
   },
   "rangeStrategy": "pin",
+  "automerge": true,
+  "automergeType": "branch"
   "packageRules": [
-    {
-      "matchUpdateTypes": [
-        "minor",
-        "patch",
-        "pin",
-        "digest",
-        "lockFileMaintenance"
-      ],
-      "automerge": true,
-      "automergeType": "branch"
-    },
     {
       "matchPackageNames": ["node"],
       "rangeStrategy": "replace"
