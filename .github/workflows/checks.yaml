@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' || !startsWith(github.event.pull_request.head.ref, 'renovate/')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
         with:
           node-version: 20.19.4
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' || !startsWith(github.event.pull_request.head.ref, 'renovate/')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
         with:
           node-version: 20.19.4
